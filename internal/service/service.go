@@ -8,4 +8,5 @@ import (
 type ExecutorService interface {
 	Run(ctx context.Context) error
 	Setup(storage.ExecutorStorage)
+	Release(ctx context.Context)
 }

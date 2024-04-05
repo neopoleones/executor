@@ -4,6 +4,7 @@ import (
 	"context"
 	"executor/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
 	"os"
@@ -16,7 +17,22 @@ type Service struct {
 	server  http.Server
 }
 
+func (s *Service) Release(ctx context.Context) {
+	err := s.server.Shutdown(ctx)
+
+	// No reason to return error: graceful shutdown failed!
+	if err != nil {
+		panic(err)
+	}
+
+	s.storage.Close(ctx)
+}
+
 func (s *Service) Run(ctx context.Context) error {
+
+	// I guess I can use background here as after closing ctx.Done we'll exit or call serverStopCtx
+	// So serverCtx(background) is anyway related to ctx(outbound background)
+
 	serverCtx, serverStopCtx := context.WithCancel(context.TODO())
 
 	go func() {
@@ -38,12 +54,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 		}()
 
-		err := s.server.Shutdown(shutdownCtx)
-		if err != nil {
-			// No reason to return error: graceful shutdown failed!
-			panic(err)
-		}
-
+		s.Release(shutdownCtx)
 		serverStopCtx()
 	}()
 
@@ -63,14 +74,21 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) setupMiddlewares(r *chi.Mux) {
-	// TODO
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 }
 
 func (s *Service) setupHandlers(r *chi.Mux) {
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("Hello from teapot"))
-	})
+	r.Get("/status", s.statusHandler())
+
+	apiRouter := chi.NewRouter()
+
+	apiRouter.Get("/get", s.getHandler())
+	apiRouter.Get("/list", s.listHandler())
+	apiRouter.Post("/schedule", s.scheduleHandler())
+
+	r.Mount("/cmd", apiRouter)
 }
 
 func (s *Service) getRouter() http.Handler {
