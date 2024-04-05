@@ -63,43 +63,12 @@
                 output:     []string
 
 
-slog?
 
+chi as lightweight
 
-import (
-"github.com/sirupsen/logrus"
-"os"
-"os/exec"
-)
+system exec environment from stdlib
 
-func Execute(script string, command []string) (bool, error) {
+custom buffer for defeating RC 
 
-    cmd := &exec.Cmd{
-        Path:   script,
-        Args:   command,
-        Stdout: os.Stdout,
-        Stderr: os.Stderr,
-    }
-
-    c.logger.Info("Executing command ", cmd)
-
-    err := cmd.Start()
-    if err != nil {
-        return false, err
-    }
-
-    err = cmd.Wait()
-    if err != nil {
-        return false, err
-    }
-
-    return true, nil
-}
-
-command := []string{
-"/<path>/yourscript.sh",
-"arg1=val1",
-"arg2=val2",
-}
-
-Execute("/<path>/yourscript.sh", command)
+yaml used for configuration 
+    (also as lightweight solution) 

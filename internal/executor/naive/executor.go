@@ -2,19 +2,17 @@ package naive
 
 import (
 	"context"
+	"errors"
 	"executor/internal/executor"
 	"executor/internal/models"
 	"executor/internal/storage"
+	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"log/slog"
 	"os"
 	"os/exec"
 	"time"
-)
-
-const (
-	OutputBufSize = 4096
 )
 
 const (
@@ -25,6 +23,11 @@ const (
 
 func init() {
 	// Check for interpreter
+	if _, err := os.Stat(interpreterPath); errors.Is(err, os.ErrNotExist) {
+		// tough way to say something is wrong
+		// but service shouldn't be started with incorrect interpreter
+		panic(fmt.Sprintf("interpreter: %s - not found", interpreterPath))
+	}
 }
 
 type SystemExecutor struct {
@@ -64,6 +67,13 @@ func (s *SystemExecutor) prepareCommand(fName string, buffer io.Writer) *exec.Cm
 	}
 }
 
+func (s *SystemExecutor) Release(ctx context.Context) {
+	// Release is a function for other CommandExecutor implementations
+	// like remote environments support
+
+	slog.Info("executor released")
+}
+
 func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnable, error) {
 	// First of all, we get a runnable from storage
 	runnable, err := s.storage.GetCommandByID(ctx, sid)
@@ -99,6 +109,7 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 	go func() {
 		rejectTicker := time.NewTicker(time.Second)
 
+	outer:
 		for {
 			if nl := outBuf.buf.String(); len(nl) > 0 {
 				// TODO: add buffered read for adding several lines at once
@@ -131,8 +142,16 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 					_ = cmd.Process.Kill()
 				}
 
-			default:
+			case <-ctx.Done():
+				// TODO: check if context check is useful here
 
+				// When context is fired, server is shutting down
+				// So we can't handle execution of runnable anymore
+
+				_ = cmd.Process.Kill()
+				break outer
+			default:
+				// Just check for next line
 			}
 		}
 

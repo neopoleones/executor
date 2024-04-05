@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"executor/internal/executor"
 	"executor/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,9 +13,11 @@ import (
 )
 
 type Service struct {
-	addr    string
-	storage storage.ExecutorStorage
-	server  http.Server
+	addr     string
+	storage  storage.ExecutorStorage
+	executor executor.CommandExecutor
+
+	server http.Server
 }
 
 func (s *Service) Release(ctx context.Context) {
@@ -25,6 +28,7 @@ func (s *Service) Release(ctx context.Context) {
 		panic(err)
 	}
 
+	s.executor.Release(ctx)
 	s.storage.Close(ctx)
 }
 

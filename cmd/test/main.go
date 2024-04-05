@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"executor/internal/config"
 	"executor/internal/executor/naive"
 	"executor/internal/models"
 	"executor/internal/storage/inmemory"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	// test
+	cfg := config.GetConfiguration()
+	fmt.Println(cfg)
+
 	storage, _ := inmemory.GetStorage()
 	exec := naive.GetExecutor(storage)
 
