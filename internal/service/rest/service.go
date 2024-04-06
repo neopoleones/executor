@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"executor/internal/config"
 	"executor/internal/executor"
 	"executor/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -104,8 +105,9 @@ func (s *Service) getRouter() http.Handler {
 	return router
 }
 
-func (s *Service) Setup(es storage.ExecutorStorage) {
+func (s *Service) Setup(es storage.ExecutorStorage, ex executor.CommandExecutor) {
 	s.storage = es
+	s.executor = ex
 
 	s.server = http.Server{
 		Addr:    s.addr,
@@ -113,8 +115,8 @@ func (s *Service) Setup(es storage.ExecutorStorage) {
 	}
 }
 
-func GetService(addr string) *Service {
+func GetService(cfg *config.Configuration) *Service {
 	return &Service{
-		addr: addr,
+		addr: cfg.Service.Addr,
 	}
 }

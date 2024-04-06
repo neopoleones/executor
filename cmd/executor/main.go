@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"executor/internal/config"
+	"executor/internal/executor/naive"
 	"executor/internal/service/rest"
+	"executor/internal/storage"
 	"executor/internal/storage/inmemory"
 	"os"
 	"os/signal"
@@ -13,22 +16,35 @@ var exitSignals = []os.Signal{
 	syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT,
 }
 
-func init() {
-
-}
-
 func main() {
-	storage, err := inmemory.GetStorage()
-	if err != nil {
-		panic(err)
+	var err error
+	var st storage.ExecutorStorage
+
+	cfg := config.GetConfiguration()
+
+	// Get storage
+	switch cfg.Database.Kind {
+	case config.DBKindLocal:
+		st, err = inmemory.GetStorage()
+		if err != nil {
+			panic(err)
+		}
+	case config.DBKindPostgres:
+		fallthrough
+	default:
+		panic("not implemented")
 	}
 
-	rs := rest.GetService("127.0.0.1:8080")
-	rs.Setup(storage)
+	// Get executor
+	runner := naive.GetExecutor(st, cfg)
 
+	// Create & setup service
+	service := rest.GetService(cfg)
+	service.Setup(st, runner)
+
+	// Prepare context and run
 	appCtx, _ := signal.NotifyContext(context.Background(), exitSignals...)
-
-	if err := rs.Run(appCtx); err != nil {
+	if err := service.Run(appCtx); err != nil {
 		panic(err)
 	}
 }

@@ -12,8 +12,14 @@ var cfg *Configuration
 var once sync.Once
 
 const (
-	EnvConfPathKey  = "CFG_PATH"
-	DefaultConfPath = "./etc/conf.yml"
+	DBKindLocal    = "local"
+	DBKindPostgres = "postgres"
+)
+
+const (
+	EnvConfPathKey      = "CFG_PATH"
+	EnvDatabasePassword = "DB_PASS"
+	DefaultConfPath     = "./etc/conf.yml"
 )
 
 func envConfPath() string {
@@ -21,9 +27,17 @@ func envConfPath() string {
 }
 
 type Configuration struct {
+	Version string `yaml:"version"`
+
 	Service  ServiceConfiguration  `yaml:"service"`
 	Database DatabaseConfiguration `yaml:"database"`
 	Executor ExecutorConfiguration `yaml:"executor"`
+}
+
+func (c *Configuration) loadSensitiveFromEnv() {
+	if v := os.Getenv(EnvDatabasePassword); len(v) > 0 {
+		c.Database.Password = v
+	}
 }
 
 type ServiceConfiguration struct {
@@ -31,11 +45,13 @@ type ServiceConfiguration struct {
 }
 
 type DatabaseConfiguration struct {
+	Kind string `yaml:"kind"`
+
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 	Hostname string `yaml:"hostname"`
 	Port     int    `yaml:"port"`
-	DB       string `yaml:"DB"`
+	DB       string `yaml:"db"`
 }
 
 type ExecutorConfiguration struct {
@@ -43,13 +59,12 @@ type ExecutorConfiguration struct {
 }
 
 func parseConfiguration(path string) error {
-	fd, err := os.Open(path)
-	if err != nil {
+	if _, err := os.Stat(path); err != nil {
 		return err
 	}
 
-	rawCfg := make([]byte, 0, 1024)
-	if _, err := fd.Read(rawCfg); err != nil {
+	rawCfg, err := os.ReadFile(path)
+	if err != nil {
 		return err
 	}
 
@@ -63,13 +78,15 @@ func GetConfiguration(possibleLocations ...string) *Configuration {
 		// I sure possibleLocations isn't that large, so those slow operations
 		// won't affect the service
 
-		possibleLocations = append([]string{EnvConfPathKey}, possibleLocations...) // first priority
-		possibleLocations = append(possibleLocations, DefaultConfPath)             // last priority
+		possibleLocations = append([]string{envConfPath()}, possibleLocations...) // first priority
+		possibleLocations = append(possibleLocations, DefaultConfPath)            // last priority
 
 		for _, candidatePath := range possibleLocations {
 			if _, err := os.Stat(candidatePath); err == nil {
 				// Try to parse configuration with this path
 				if err := parseConfiguration(candidatePath); err == nil {
+					cfg.loadSensitiveFromEnv()
+
 					slog.Info(
 						"loaded the configuration",
 						slog.String("path", candidatePath),

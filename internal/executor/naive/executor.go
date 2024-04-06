@@ -3,6 +3,7 @@ package naive
 import (
 	"context"
 	"errors"
+	"executor/internal/config"
 	"executor/internal/executor"
 	"executor/internal/models"
 	"executor/internal/storage"
@@ -16,21 +17,13 @@ import (
 )
 
 const (
-	tempLoc         = "/tmp"
-	tempSfx         = "naive_runner"
-	interpreterPath = "/bin/sh"
+	tempLoc = "/tmp"
+	tempSfx = "naive_runner"
 )
 
-func init() {
-	// Check for interpreter
-	if _, err := os.Stat(interpreterPath); errors.Is(err, os.ErrNotExist) {
-		// tough way to say something is wrong
-		// but service shouldn't be started with incorrect interpreter
-		panic(fmt.Sprintf("interpreter: %s - not found", interpreterPath))
-	}
-}
-
 type SystemExecutor struct {
+	interpreterPath string
+
 	storage storage.ExecutorStorage
 }
 
@@ -60,8 +53,8 @@ func (s *SystemExecutor) toTempScript(commands []string) (string, error) {
 
 func (s *SystemExecutor) prepareCommand(fName string, buffer io.Writer) *exec.Cmd {
 	return &exec.Cmd{
-		Path:      interpreterPath,
-		Args:      []string{interpreterPath, fName},
+		Path:      s.interpreterPath,
+		Args:      []string{s.interpreterPath, fName}, // argv[0] = runner_path
 		WaitDelay: time.Second,
 		Stdout:    buffer,
 	}
@@ -175,6 +168,15 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 	return runnable, nil
 }
 
-func GetExecutor(es storage.ExecutorStorage) *SystemExecutor {
-	return &SystemExecutor{es}
+func GetExecutor(es storage.ExecutorStorage, cfg *config.Configuration) *SystemExecutor {
+	// Check for interpreter
+	nip := cfg.Executor.InterpreterPath
+
+	if _, err := os.Stat(nip); errors.Is(err, os.ErrNotExist) {
+		// tough way to say something is wrong
+		// but service shouldn't be started with incorrect interpreter
+		panic(fmt.Sprintf("interpreter: %s - not found", nip))
+	}
+
+	return &SystemExecutor{nip, es}
 }

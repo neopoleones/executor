@@ -1,0 +1,15 @@
+version: "v.001"
+
+service:
+  addr: "127.0.0.1:8080"
+
+database:
+  kind: "local" # local, postgres
+
+  username: "executor_user"
+  hostname: "localhost"
+  port: 5432
+  db: "executor"
+
+executor:
+  interpreter_path: "/bin/sh"

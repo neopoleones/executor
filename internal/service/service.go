@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
+	"executor/internal/executor"
 	"executor/internal/storage"
 )
 
 type ExecutorService interface {
-	Run(ctx context.Context) error
-	Setup(storage.ExecutorStorage)
-	Release(ctx context.Context)
+	Run(context.Context) error
+	Setup(storage.ExecutorStorage, executor.CommandExecutor)
+	Release(context.Context)
 }
