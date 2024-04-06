@@ -1,0 +1,24 @@
+version: '3'
+
+tasks:
+  mg_up:
+    env:
+      MIG_ACT: up
+    desc: "Applies migrations"
+    cmds:
+      - "docker compose run migrate"
+  mg_down:
+    env:
+      MIG_ACT: down
+    desc: "Cleans the database (removes migrations)"
+    cmds:
+      - "docker compose run migrate"
+  up:
+
+    desc: "Starts the services"
+    cmds:
+      - "docker compose up --build -d --remove-orphans"
+  down:
+    desc: "Stops the services"
+    cmds:
+      - "docker compose down"

@@ -1,13 +1,13 @@
 version: "v.001"
 
 service:
-  addr: "127.0.0.1:8080"
+  addr: "0.0.0.0:8080"
 
 database:
-  kind: "local" # local, postgres
+  kind: "postgres" # local, postgres
 
   username: "executor_user"
-  hostname: "localhost"
+  hostname: "db"
   port: 5432
   db: "executor"
 

@@ -1,0 +1,40 @@
+version: '3'
+services:
+  executor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DB_PASS=${DB_PASS}
+    restart: always
+
+  db:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=executor_user
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=executor
+    volumes:
+      - pg_d:/var/lib/postgresql/data
+
+  migrate:
+
+    profiles:
+      - donotstart
+
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database",  "postgres://executor_user:${DB_PASS}@db:5432/executor?sslmode=disable", "${MIG_ACT}", "1"]
+    links:
+      - db
+
+
+volumes:
+  pg_d:

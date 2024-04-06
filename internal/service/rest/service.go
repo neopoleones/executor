@@ -79,6 +79,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 func (s *Service) setupMiddlewares(r *chi.Mux) {
 	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 }
 

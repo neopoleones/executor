@@ -1,14 +1,41 @@
 package main
 
 import (
+	"context"
 	"executor/internal/config"
+	"executor/internal/storage/postgres"
 	"fmt"
 )
 
 func main() {
 	// test
 	cfg := config.GetConfiguration()
-	fmt.Println(cfg)
+
+	appCtx := context.Background()
+	sampleScript := []string{
+		"id",
+		"uname -a",
+	}
+
+	storage, err := postgres.GetStorage(appCtx, cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	if m, e := storage.AddCommand(appCtx, sampleScript); e != nil {
+		panic(e)
+	} else {
+		fmt.Println(m)
+	}
+
+	m, e := storage.GetCommands(appCtx)
+	if e != nil {
+		panic(e)
+	}
+
+	for _, cr := range m {
+		fmt.Println(cr)
+	}
 
 	//storage, _ := inmemory.GetStorage()
 	//exec := naive.GetExecutor(storage)

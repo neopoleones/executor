@@ -7,6 +7,7 @@ import (
 	"executor/internal/service/rest"
 	"executor/internal/storage"
 	"executor/internal/storage/inmemory"
+	"executor/internal/storage/postgres"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,7 @@ func main() {
 	var err error
 	var st storage.ExecutorStorage
 
+	appCtx, _ := signal.NotifyContext(context.Background(), exitSignals...)
 	cfg := config.GetConfiguration()
 
 	// Get storage
@@ -30,7 +32,10 @@ func main() {
 			panic(err)
 		}
 	case config.DBKindPostgres:
-		fallthrough
+		st, err = postgres.GetStorage(appCtx, cfg)
+		if err != nil {
+			panic(err)
+		}
 	default:
 		panic("not implemented")
 	}
@@ -42,9 +47,7 @@ func main() {
 	service := rest.GetService(cfg)
 	service.Setup(st)
 
-	// Prepare context and run
-	appCtx, _ := signal.NotifyContext(context.Background(), exitSignals...)
-
+	// Use context and run
 	go runner.Start(appCtx)
 	defer runner.Release(appCtx)
 
