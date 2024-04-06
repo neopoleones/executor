@@ -7,38 +7,26 @@
         uptime:  duration
 
         commands:
-            scheduled: number  (increases pre-execute)
+            running:   number  (increases pre-execute)
             exited:    number  (increases post-execute)
 
 `/cmd/schedule`
 
-    Args:
-        script:  string
+    Args(json):
+        script:  []string
 
     Returns:
+        status:  ok
         sid:        string (ID of scheduled script (aka command)) 
         sched_time: when command was scheduled
 
 `/cmd/list`
- 
-    Args (all optional):
-        sort:    asc/desc
-        from:    datetime
-        before:  datetime
-
+    
     Returns:
-        [] runnable:
+        status: ok
+        commands: [] runnable:
             sid:        string (uid?)
-            script:     string
-            status:     scheduled/done            
-
-            info:
-                sched_time: datetime
-                exit_time:  datetime
-                start_Time: datetime
-
-                code:       number
-                output:     []string
+            status:     scheduled/done
                         
 
 `/cmd/get`
@@ -47,7 +35,7 @@
         sid: string (uid?)
 
     Returns:
-        found: bool
+        status: ok
         
         runnable (optional):
             sid:        string (uid?)

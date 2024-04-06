@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,8 @@ type SystemExecutor struct {
 	interpreterPath string
 
 	storage storage.ExecutorStorage
+
+	schedTicks time.Duration
 }
 
 func (s *SystemExecutor) getTemp() (*os.File, error) {
@@ -46,6 +49,7 @@ func (s *SystemExecutor) toTempScript(commands []string) (string, error) {
 		if _, err = bFile.WriteString(c); err != nil {
 			return "", err
 		}
+		_, _ = bFile.WriteString("\n")
 	}
 
 	return bFile.Name(), nil
@@ -60,11 +64,56 @@ func (s *SystemExecutor) prepareCommand(fName string, buffer io.Writer) *exec.Cm
 	}
 }
 
+func (s *SystemExecutor) runLogged(ctx context.Context, wg *sync.WaitGroup, sid uuid.UUID) {
+	defer wg.Done()
+
+	slog.Info("started executing command", slog.String("sid", sid.String()))
+	_, _ = s.Run(ctx, sid)
+}
+
+func (s *SystemExecutor) killLogged(cmd *exec.Cmd, sid uuid.UUID) {
+	slog.Info("scheduler killed the runnable", slog.String("sid", sid.String()))
+	_ = cmd.Process.Kill()
+}
+
 func (s *SystemExecutor) Release(ctx context.Context) {
 	// Release is a function for other CommandExecutor implementations
 	// like remote environments support
 
 	slog.Info("executor released")
+}
+
+func (s *SystemExecutor) Start(ctx context.Context) {
+	ticker := time.NewTicker(s.schedTicks)
+	var wg sync.WaitGroup
+
+outer:
+	for {
+		select {
+		case <-ticker.C:
+			slog.Debug("scheduler tick")
+
+			// Get commands and filter by scheduled status
+			commands, err := s.storage.GetCommands(ctx)
+			if err != nil {
+				slog.Warn("failed to get commands list", slog.String("err", err.Error()))
+				continue
+			}
+			commands = storage.FilterRunnablesByStatus(commands, models.StatusScheduled)
+
+			// And run every command
+			for _, c := range commands {
+				wg.Add(1)
+				go s.runLogged(ctx, &wg, c.Sid)
+			}
+
+		case <-ctx.Done():
+			break outer
+		}
+	}
+
+	// Wait command to be killed
+	wg.Wait()
 }
 
 func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnable, error) {
@@ -132,7 +181,7 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 
 				// Force process to exit
 				if runnableUpdate.Status == models.StatusRejected {
-					_ = cmd.Process.Kill()
+					s.killLogged(cmd, runnable.Sid)
 				}
 
 			case <-ctx.Done():
@@ -141,7 +190,7 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 				// When context is fired, server is shutting down
 				// So we can't handle execution of runnable anymore
 
-				_ = cmd.Process.Kill()
+				s.killLogged(cmd, runnable.Sid)
 				break outer
 			default:
 				// Just check for next line
@@ -178,5 +227,11 @@ func GetExecutor(es storage.ExecutorStorage, cfg *config.Configuration) *SystemE
 		panic(fmt.Sprintf("interpreter: %s - not found", nip))
 	}
 
-	return &SystemExecutor{nip, es}
+	if cfg.Executor.SchedTicks < time.Second {
+		panic(fmt.Sprintf("incorrect SchedTicks value (<1s): %v", cfg.Executor.SchedTicks))
+	}
+
+	return &SystemExecutor{
+		nip, es, cfg.Executor.SchedTicks,
+	}
 }

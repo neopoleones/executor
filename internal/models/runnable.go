@@ -30,12 +30,12 @@ func (r *Runnable) AddExitCode(code int) {
 }
 
 type RunnableInfo struct {
-	ScheduledTime time.Time `json:"sched_time"`
-	StartedTime   time.Time `json:"start_time"`
-	ExitTime      time.Time `json:"exit_time"`
+	ScheduledTime time.Time `json:"sched_time,omitempty"`
+	StartedTime   time.Time `json:"start_time,omitempty"`
+	ExitTime      time.Time `json:"exit_time,omitempty"`
 
 	ExitCode int      `json:"exit_code"`
-	Output   []string `json:"output"`
+	Output   []string `json:"output,omitempty"`
 }
 
 func NewRunnable(sources []string) *Runnable {

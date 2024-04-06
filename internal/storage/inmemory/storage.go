@@ -13,8 +13,13 @@ type DummyStorage struct {
 }
 
 func (d DummyStorage) GetCommands(ctx context.Context) ([]*models.Runnable, error) {
-	//TODO implement me
-	panic("implement me")
+	result := make([]*models.Runnable, 0, len(d.data))
+
+	for _, v := range d.data {
+		result = append(result, v)
+	}
+
+	return result, nil
 }
 
 func (d DummyStorage) GetCommandByID(_ context.Context, uuid uuid.UUID) (*models.Runnable, error) {

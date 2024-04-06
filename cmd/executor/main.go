@@ -40,10 +40,14 @@ func main() {
 
 	// Create & setup service
 	service := rest.GetService(cfg)
-	service.Setup(st, runner)
+	service.Setup(st)
 
 	// Prepare context and run
 	appCtx, _ := signal.NotifyContext(context.Background(), exitSignals...)
+
+	go runner.Start(appCtx)
+	defer runner.Release(appCtx)
+
 	if err := service.Run(appCtx); err != nil {
 		panic(err)
 	}

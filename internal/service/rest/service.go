@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"executor/internal/config"
-	"executor/internal/executor"
 	"executor/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -14,9 +13,10 @@ import (
 )
 
 type Service struct {
-	addr     string
-	storage  storage.ExecutorStorage
-	executor executor.CommandExecutor
+	addr    string
+	version string
+
+	storage storage.ExecutorStorage
 
 	server http.Server
 }
@@ -29,7 +29,6 @@ func (s *Service) Release(ctx context.Context) {
 		panic(err)
 	}
 
-	s.executor.Release(ctx)
 	s.storage.Close(ctx)
 }
 
@@ -80,7 +79,6 @@ func (s *Service) Run(ctx context.Context) error {
 
 func (s *Service) setupMiddlewares(r *chi.Mux) {
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 }
 
@@ -105,9 +103,8 @@ func (s *Service) getRouter() http.Handler {
 	return router
 }
 
-func (s *Service) Setup(es storage.ExecutorStorage, ex executor.CommandExecutor) {
+func (s *Service) Setup(es storage.ExecutorStorage) {
 	s.storage = es
-	s.executor = ex
 
 	s.server = http.Server{
 		Addr:    s.addr,
@@ -117,6 +114,7 @@ func (s *Service) Setup(es storage.ExecutorStorage, ex executor.CommandExecutor)
 
 func GetService(cfg *config.Configuration) *Service {
 	return &Service{
-		addr: cfg.Service.Addr,
+		version: cfg.Version,
+		addr:    cfg.Service.Addr,
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"time"
 )
 
 var cfg *Configuration
@@ -55,7 +56,8 @@ type DatabaseConfiguration struct {
 }
 
 type ExecutorConfiguration struct {
-	InterpreterPath string `yaml:"interpreter_path"`
+	InterpreterPath string        `yaml:"interpreter_path"`
+	SchedTicks      time.Duration `yaml:"sched_ticks"`
 }
 
 func parseConfiguration(path string) error {

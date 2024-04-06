@@ -13,3 +13,4 @@ database:
 
 executor:
   interpreter_path: "/bin/sh"
+  sched_ticks: "5s"

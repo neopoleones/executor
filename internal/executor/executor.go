@@ -12,6 +12,10 @@ var (
 )
 
 type CommandExecutor interface {
+	// Run gets scheduled command from storage and executes it
 	Run(context.Context, uuid.UUID) (*models.Runnable, error)
-	Release(ctx context.Context)
+	Release(context.Context)
+
+	// Start initializes scheduler
+	Start(context.Context)
 }
