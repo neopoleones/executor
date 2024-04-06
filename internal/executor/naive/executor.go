@@ -76,7 +76,7 @@ func (s *SystemExecutor) killLogged(cmd *exec.Cmd, sid uuid.UUID) {
 	_ = cmd.Process.Kill()
 }
 
-func (s *SystemExecutor) Release(ctx context.Context) {
+func (s *SystemExecutor) Release(_ context.Context) {
 	// Release is a function for other CommandExecutor implementations
 	// like remote environments support
 
@@ -154,7 +154,6 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 	outer:
 		for {
 			if nl := outBuf.buf.String(); len(nl) > 0 {
-				// TODO: add buffered read for adding several lines at once
 				if err := s.storage.AddCommandOutput(ctx, runnable.Sid, []string{nl}); err != nil {
 					slog.Warn(
 						"failed to add command output",
@@ -182,11 +181,10 @@ func (s *SystemExecutor) Run(ctx context.Context, sid uuid.UUID) (*models.Runnab
 				// Force process to exit
 				if runnableUpdate.Status == models.StatusRejected {
 					s.killLogged(cmd, runnable.Sid)
+					break outer
 				}
 
 			case <-ctx.Done():
-				// TODO: check if context check is useful here
-
 				// When context is fired, server is shutting down
 				// So we can't handle execution of runnable anymore
 

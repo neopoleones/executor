@@ -3,6 +3,7 @@ package rest
 import (
 	"errors"
 	"executor/internal/models"
+	"executor/internal/storage"
 	"github.com/google/uuid"
 	"net/http"
 )
@@ -28,7 +29,12 @@ func (s *Service) getHandler() http.HandlerFunc {
 
 		runnable, err := s.storage.GetCommandByID(r.Context(), sid)
 		if err != nil {
-			response(NewErrorResponse(err), http.StatusBadRequest, w)
+			var code = http.StatusInternalServerError
+			if errors.Is(err, storage.ErrNotFound) {
+				code = http.StatusNotFound
+			}
+			
+			response(NewErrorResponse(err), code, w)
 			return
 		}
 

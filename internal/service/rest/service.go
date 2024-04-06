@@ -90,6 +90,7 @@ func (s *Service) setupHandlers(r *chi.Mux) {
 	apiRouter.Get("/get", s.getHandler())
 	apiRouter.Get("/list", s.listHandler())
 	apiRouter.Post("/schedule", s.scheduleHandler())
+	apiRouter.Post("/kill", s.killHandler())
 
 	r.Mount("/cmd", apiRouter)
 }
