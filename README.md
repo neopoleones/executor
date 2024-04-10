@@ -24,7 +24,7 @@ service:
   addr: "0.0.0.0:8080"        # ip:port - в обьяснении не нуждается :)
 
 database:
-  kind: "postgres"            # Тип БД: local(используется для тестовов - простейшая реализация ExecutorStorage), postgres
+  kind: "postgres"            # Тип БД: local(используется для тестов - простейшая реализация ExecutorStorage), postgres
 
   # Все эти поля используются, если kind=postgres!
   # Использовать поле password в конфигурации не стоит. Такие вещи передаем как переменные окружения.
