@@ -21,7 +21,8 @@ services:
       - POSTGRES_PASSWORD=${DB_PASS}
       - POSTGRES_DB=executor
     volumes:
-      - pg_d:/var/lib/postgresql/data
+      - ./migrations/000001_make_schema.up.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgda:/var/lib/postgresql/data
 
   migrate:
 
@@ -37,4 +38,4 @@ services:
 
 
 volumes:
-  pg_d:
+  pgda:

@@ -1,4 +1,4 @@
-CREATE TABLE cmd(
+CREATE TABLE IF NOT EXISTS cmd(
     sid uuid DEFAULT gen_random_uuid(),
 
     status TEXT NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE cmd(
 );
 
 
-CREATE TABLE cmd_info(
+CREATE TABLE IF NOT EXISTS cmd_info(
     cmd_info_id SERIAL PRIMARY KEY,
 
     cmd_sid        uuid NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE cmd_info(
         REFERENCES cmd (sid)
 );
 
-CREATE TABLE cmd_source(
+CREATE TABLE IF NOT EXISTS cmd_source(
     source_id SERIAL PRIMARY KEY,
 
     cmd_sid     uuid NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE cmd_source(
         REFERENCES cmd (sid)
 );
 
-CREATE TABLE cmd_output(
+CREATE TABLE IF NOT EXISTS cmd_output(
     output_id SERIAL PRIMARY KEY,
 
     cmd_sid      uuid NOT NULL,
