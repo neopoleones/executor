@@ -225,8 +225,8 @@ func GetExecutor(es storage.ExecutorStorage, cfg *config.Configuration) *SystemE
 		panic(fmt.Sprintf("interpreter: %s - not found", nip))
 	}
 
-	if cfg.Executor.SchedTicks < time.Second {
-		panic(fmt.Sprintf("incorrect SchedTicks value (<1s): %v", cfg.Executor.SchedTicks))
+	if cfg.Executor.SchedTicks < time.Millisecond*50 {
+		panic(fmt.Sprintf("incorrect SchedTicks value (<50ms): %v", cfg.Executor.SchedTicks))
 	}
 
 	return &SystemExecutor{

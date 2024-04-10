@@ -15,6 +15,7 @@ import (
 type Service struct {
 	addr    string
 	version string
+	verbose bool
 
 	storage storage.ExecutorStorage
 
@@ -79,7 +80,10 @@ func (s *Service) Run(ctx context.Context) error {
 
 func (s *Service) setupMiddlewares(r *chi.Mux) {
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
+
+	if s.verbose {
+		r.Use(middleware.Logger)
+	}
 	r.Use(middleware.Recoverer)
 }
 
@@ -118,5 +122,6 @@ func GetService(cfg *config.Configuration) *Service {
 	return &Service{
 		version: cfg.Version,
 		addr:    cfg.Service.Addr,
+		verbose: cfg.Verbose,
 	}
 }

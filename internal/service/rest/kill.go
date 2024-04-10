@@ -9,15 +9,15 @@ import (
 	"net/http"
 )
 
+type KillRequest struct {
+	RawSid string `json:"sid"`
+}
+
+type KillResponse struct {
+	Status string `json:"status"`
+}
+
 func (s *Service) killHandler() http.HandlerFunc {
-	type KillRequest struct {
-		RawSid string `json:"sid"`
-	}
-
-	type KillResponse struct {
-		Status string `json:"status"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		var kr KillRequest
 
@@ -50,6 +50,12 @@ func (s *Service) killHandler() http.HandlerFunc {
 			}
 
 			response(NewErrorResponse(err), code, w)
+			return
+		}
+
+		// Is execution in progress?
+		if runnable.Status != models.StatusInProgress {
+			response(NewErrorResponse(errors.New("command not in running state")), http.StatusUnprocessableEntity, w)
 			return
 		}
 

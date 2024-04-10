@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
+type RunnableInfo struct {
+	Running int `json:"running"`
+	Exited  int `json:"exited"`
+}
+
+type StatusResponse struct {
+	Status  string        `json:"status"`
+	Version string        `json:"version"`
+	Uptime  time.Duration `json:"uptime"`
+
+	Commands RunnableInfo `json:"commands"`
+}
+
 func (s *Service) statusHandler() http.HandlerFunc {
-	type RunnableInfo struct {
-		Running int `json:"running"`
-		Exited  int `json:"exited"`
-	}
-
-	type StatusResponse struct {
-		Status  string        `json:"status"`
-		Version string        `json:"version"`
-		Uptime  time.Duration `json:"uptime"`
-
-		Commands RunnableInfo `json:"commands"`
-	}
-
 	handleInitialized := time.Now()
 
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -8,15 +8,15 @@ import (
 	"net/http"
 )
 
+type GetResponse struct {
+	Status   string           `json:"status"`
+	Runnable *models.Runnable `json:"runnable"`
+}
+
 func (s *Service) getHandler() http.HandlerFunc {
 	const (
 		paramSid = "sid"
 	)
-
-	type GetResponse struct {
-		Status   string           `json:"status"`
-		Runnable *models.Runnable `json:"runnable"`
-	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawSid := r.URL.Query().Get(paramSid)
@@ -33,7 +33,7 @@ func (s *Service) getHandler() http.HandlerFunc {
 			if errors.Is(err, storage.ErrNotFound) {
 				code = http.StatusNotFound
 			}
-			
+
 			response(NewErrorResponse(err), code, w)
 			return
 		}

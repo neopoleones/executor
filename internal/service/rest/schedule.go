@@ -7,16 +7,17 @@ import (
 	"time"
 )
 
-func (s *Service) scheduleHandler() http.HandlerFunc {
-	type ScheduleRequest struct {
-		Script []string `json:"script"`
-	}
+type ScheduleRequest struct {
+	Script []string `json:"script"`
+}
 
-	type ScheduleResponse struct {
-		Status    string    `json:"status"`
-		Sid       string    `json:"sid"`
-		SchedTime time.Time `json:"sched_time"`
-	}
+type ScheduleResponse struct {
+	Status    string    `json:"status"`
+	Sid       string    `json:"sid"`
+	SchedTime time.Time `json:"sched_time"`
+}
+
+func (s *Service) scheduleHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var sr ScheduleRequest

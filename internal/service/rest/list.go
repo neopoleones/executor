@@ -6,16 +6,17 @@ import (
 	"net/http"
 )
 
-func (s *Service) listHandler() http.HandlerFunc {
-	type RunnableSimplified struct {
-		Sid    uuid.UUID             `json:"sid"`
-		Status models.RunnableStatus `json:"status"`
-	}
+type RunnableSimplified struct {
+	Sid    uuid.UUID             `json:"sid"`
+	Status models.RunnableStatus `json:"status"`
+}
 
-	type ListResponse struct {
-		Status   string               `json:"status"`
-		Commands []RunnableSimplified `json:"commands"`
-	}
+type ListResponse struct {
+	Status   string               `json:"status"`
+	Commands []RunnableSimplified `json:"commands"`
+}
+
+func (s *Service) listHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		rl, err := s.storage.GetCommands(r.Context())

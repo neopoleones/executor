@@ -29,6 +29,7 @@ func envConfPath() string {
 
 type Configuration struct {
 	Version string `yaml:"version"`
+	Verbose bool   `yaml:"verbose"`
 
 	Service  ServiceConfiguration  `yaml:"service"`
 	Database DatabaseConfiguration `yaml:"database"`

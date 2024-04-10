@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+type GenericResponse map[any]any
+
 type ErrorResponse struct {
 	Status string `json:"status"`
 	Reason string `json:"reason"`
